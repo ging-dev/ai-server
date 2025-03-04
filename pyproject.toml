@@ -1,0 +1,11 @@
+[project]
+name = "ai-server"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "flask>=3.1.0",
+    "httpx-sse==0.4.*",
+    "httpx>=0.28.1",
+]
