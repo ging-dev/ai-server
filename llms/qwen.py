@@ -28,15 +28,16 @@ For each function call, return a json object with function name and arguments wi
 
 @contextmanager
 def completion(
-    model: str, messages: list[Message], stream: bool = True, **kwargs
+    model: str, messages: list[Message], stream: bool = False, **kwargs
 ) -> Generator[Message | Iterator[Message], None, None]:
-    kwargs["incremental_output"] = True
+    print(kwargs)
+    print(messages)
     for message in messages:
         if message["role"] == "tool":
             message["role"] = "user"
             message["content"] = f"<tool_response>{message["content"]}</tool_response>"
     tools = kwargs.pop("tools", None)
-    if tools:
+    if tools and not stream:
         from jinja2 import Environment
 
         tools_template = Environment().from_string(TOOLS_PROMPT).render(tools=tools)
@@ -45,7 +46,6 @@ def completion(
             first_message["content"] += tools_template
         else:
             messages.insert(0, {"role": "system", "content": tools_template})
-        stream = False
 
     try:
         client = httpx.Client(
@@ -58,9 +58,23 @@ def completion(
         completion_kwargs = {
             "method": "POST",
             "url": "/api/chat/completions",
-            "json": {"model": model, "messages": messages, "stream": stream, **kwargs},
+            "json": {
+                "model": model,
+                "messages": messages,
+                "stream": stream,
+                "incremental_output": True,
+            },
         }
-        if not stream:
+        if stream:
+
+            def generate():
+                with connect_sse(client, **completion_kwargs) as response:
+                    for chunk in response.iter_sse():
+                        yield chunk.json()["choices"][0]["delta"]
+
+                yield generate()
+
+        else:
             response = client.request(**completion_kwargs)
             message: Message = response.json()["choices"][0]["message"]
             tool_calls = try_parse_tool_calls(message["content"])
@@ -69,14 +83,7 @@ def completion(
                 message["tool_calls"] = tool_calls
 
             yield message
-        else:
 
-            def generate():
-                with connect_sse(client, **completion_kwargs) as response:
-                    for chunk in response.iter_sse():
-                        yield chunk.json()["choices"][0]["delta"]
-
-            yield generate()
     finally:
         client.close()
 
