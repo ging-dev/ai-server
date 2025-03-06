@@ -2,7 +2,7 @@ import json
 from flask import Blueprint, request
 from llms.qwen import completion
 
-ollama_endpoint = Blueprint(name="api", import_name=__name__, url_prefix="/api")
+ollama_endpoint = Blueprint(name="ollama_api", import_name=__name__, url_prefix="/api")
 
 
 @ollama_endpoint.post("/show")

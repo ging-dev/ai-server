@@ -33,7 +33,7 @@ def completion(
     for message in messages:
         if message["role"] == "tool":
             message["role"] = "user"
-            message["content"] = f"<tool_response>{message["content"]}</tool_response>"
+            message["content"] = f"<tool_response>{message['content']}</tool_response>"
     tools = kwargs.pop("tools", None)
     if tools and not stream:
         from jinja2 import Environment
