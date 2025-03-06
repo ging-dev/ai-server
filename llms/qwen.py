@@ -30,8 +30,6 @@ For each function call, return a json object with function name and arguments wi
 def completion(
     model: str, messages: list[Message], stream: bool = False, **kwargs
 ) -> Generator[Message | Iterator[Message], None, None]:
-    print(kwargs)
-    print(messages)
     for message in messages:
         if message["role"] == "tool":
             message["role"] = "user"
@@ -66,14 +64,11 @@ def completion(
             },
         }
         if stream:
-
-            def generate():
-                with connect_sse(client, **completion_kwargs) as response:
-                    for chunk in response.iter_sse():
-                        yield chunk.json()["choices"][0]["delta"]
-
-                yield generate()
-
+            with connect_sse(client, **completion_kwargs) as response:
+                yield (
+                    chunk.json()["choices"][0]["delta"] 
+                    for chunk in response.iter_sse()
+                )
         else:
             response = client.request(**completion_kwargs)
             message: Message = response.json()["choices"][0]["message"]
