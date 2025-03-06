@@ -66,8 +66,7 @@ def completion(
         if stream:
             with connect_sse(client, **completion_kwargs) as response:
                 yield (
-                    chunk.json()["choices"][0]["delta"] 
-                    for chunk in response.iter_sse()
+                    chunk.json()["choices"][0]["delta"] for chunk in response.iter_sse()
                 )
         else:
             response = client.request(**completion_kwargs)
