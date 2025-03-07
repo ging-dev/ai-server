@@ -52,6 +52,7 @@ def completion(
                 "Authorization": f"Bearer {os.environ['QWEN_TOKEN']}",
                 "User-Agent": "GingTeam",
             },
+            cookies={"ssxmod_itna": "GingTeam"},
         )
         completion_kwargs = {
             "method": "POST",
